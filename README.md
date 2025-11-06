@@ -238,6 +238,28 @@ This generates adjacency matrix heatmaps showing:
 - **Sparsity patterns**: Active connection structure
 - **Evolution comparison**: Side-by-side comparison of all epochs
 
+**Graph Evolution Over Training:**
+
+![Graph Evolution Comparison](graph_visuals/graph_evolution_comparison.png)
+
+The above visualization shows how the SRCG adjacency matrix evolves from **Epoch 10** to **Epoch 50**. Each column represents a different epoch, with two rows showing:
+
+**Top Row (Magnitude)**: Heatmaps showing edge weight strength (brighter = stronger connections)
+- **Epoch 10**: Dense, somewhat chaotic pattern with uniform magnitudes (exploration phase)
+- **Epoch 20-30**: Patterns begin to emerge, with stronger connections forming blocks
+- **Epoch 40-50**: Well-defined, structured motifs with clear pathways (self-organized)
+
+**Bottom Row (Sparsity)**: Binary patterns showing active connections (white = connected, black = disconnected)
+- **Epoch 10**: High density with scattered connections (initial exploration)
+- **Epoch 20-30**: Gradual reduction in scattered edges, patterns coalesce
+- **Epoch 40-50**: Highly organized, sparse structure with clear connection blocks
+
+**Key Visual Evidence of Self-Improvement:**
+1. **Density → Sparsity**: Edge count stabilizes (~9.5k) while structure becomes more organized
+2. **Chaos → Structure**: Random scatter transforms into coherent blocks and pathways
+3. **Motif Formation**: Strong diagonal patterns and off-diagonal blocks indicate reusable motifs
+4. **Efficiency Gain**: Fewer total edges but stronger, more purposeful connections
+
 **Interpretation:**
 - **Bright regions** = strong connections (active pathways)
 - **Dark regions** = weak/no connections (pruned edges)
