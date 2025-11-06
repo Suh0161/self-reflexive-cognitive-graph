@@ -1,0 +1,28 @@
+SRCG:
+  num_nodes: 100
+  dim: 128
+  reasoning_steps: 20
+  alpha_damping: 0.5
+  w_max: 0.1
+  prune_threshold: 0.02
+  add_threshold: 0.8
+  max_new_edges_per_episode: 10
+  lr_nodes: 0.001  # Learning rate for node parameters
+  lr_edges: 0.01   # Learning rate for edge plasticity (used inside plasticity, not optimizer)
+  loss_weights:
+    task: 1.0
+    energy: 0.1
+    instability: 0.05
+  enable_sivf: true  # Enable Self-Improvement Verification Framework metrics
+
+training:
+  epochs: 50
+  batch_size: 8
+
+data:
+  name: synthetic  # "synthetic" or "hierarchical"
+  progressive: false  # Enable progressive difficulty (only for hierarchical)
+  input_dim: 32
+  train_size: 800
+  val_size: 200
+
