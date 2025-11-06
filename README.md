@@ -237,17 +237,17 @@ Training over 50 epochs with progressive difficulty shows:
 If you use SRCG in your research, please cite:
 
 ```bibtex
-@software{srcg2024,
+@software{srcg2025,
   title={SRCG: Self-Reflexive Cognitive Graph},
-  author={[Your Name]},
-  year={2024},
-  url={[Repository URL]}
+  author={Suh0161},
+  year={2025},
+  url={https://github.com/Suh0161/self-reflexive-cognitive-graph}
 }
 ```
 
 ## License
 
-[Specify your license]
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
