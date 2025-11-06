@@ -225,6 +225,27 @@ Training on the HierarchicalPatternDataset demonstrates clear self-improvement:
 
 ![SIVF Trends](docs/sivf_trends.png)
 
+### Graph Evolution Visualization
+
+Visualize how the graph structure self-organizes during training:
+
+```bash
+python visualize_graph_evolution.py
+```
+
+This generates adjacency matrix heatmaps showing:
+- **Magnitude plots**: Edge weight strength across epochs
+- **Sparsity patterns**: Active connection structure
+- **Evolution comparison**: Side-by-side comparison of all epochs
+
+**Interpretation:**
+- **Bright regions** = strong connections (active pathways)
+- **Dark regions** = weak/no connections (pruned edges)
+- **Structured patterns** = self-organized motifs
+- **Increasing structure + sparsity** = evidence of self-improvement
+
+Example visualizations can be found in `graph_visuals/` directory.
+
 **Key Observations:**
 1. **Reward**: Transitions from negative (-0.44) to strongly positive (+0.64)
 2. **Entropy**: Stabilizes after initial exploration phase
