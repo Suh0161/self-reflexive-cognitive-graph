@@ -56,6 +56,115 @@ Built-in metrics to empirically validate self-organization:
                     └─────────────┘
 ```
 
+## Algorithm
+
+SRCG operates through three main phases: **Reasoning**, **Reward Computation**, and **Structural Plasticity**. Here's how it works:
+
+### Phase 1: Forward Pass (Reasoning)
+
+For each input batch:
+
+1. **Encoding**: Input $x \in \mathbb{R}^{B \times d_{in}}$ is encoded into initial node states:
+   $$H_0 = \text{Encoder}(x) \in \mathbb{R}^{B \times N \times d}$$
+   where $N$ is the number of nodes and $d$ is the node dimension.
+
+2. **Iterative Message Passing**: For $t = 0, 1, \ldots, T_r-1$ reasoning steps:
+   - **Message aggregation**: Each node receives messages from connected neighbors:
+     $$M_t = A^T H_t$$
+     where $A \in \mathbb{R}^{N \times N}$ is the adjacency matrix (edge weights).
+   
+   - **Node update**: Each node combines self-transformation with incoming messages:
+     $$\hat{H}_{t+1} = \text{ReLU}(H_t W_{\text{self}} + M_t)$$
+     where $W_{\text{self}}$ is a learnable linear transformation.
+   
+   - **Damped update**: Stabilizes the dynamics:
+     $$H_{t+1} = (1-\alpha) H_t + \alpha \hat{H}_{t+1}$$
+     where $\alpha = 0.5$ is the damping coefficient.
+
+3. **Output**: Final node states are pooled and mapped to predictions:
+   $$h_{\text{pooled}} = \frac{1}{N}\sum_{i=1}^{N} H_{T_r}[i]$$
+   $$y_{\text{pred}} = \text{OutputHead}(h_{\text{pooled}})$$
+
+### Phase 2: Reward Computation
+
+After the forward pass, a reward signal is computed based on task performance and structural costs:
+
+$$R_k = S_k - \lambda_1 C_{\text{energy}} - \lambda_2 C_{\text{inst}}$$
+
+where:
+- **Task success**: $S_k = 1 - L_{\text{task}}$ (normalized task loss)
+- **Energy cost**: $C_{\text{energy}} = \frac{1}{N^2}\sum_{i,j} |A_{ij}|$ (graph energy)
+- **Instability cost**: $C_{\text{inst}} = \frac{1}{B}\sum_{b} \|H_{T_r}[b] - H_{T_r-1}[b]\|_2$ (node movement)
+
+The reward $R_k$ is **positive** when the model performs well with minimal structural overhead, and **negative** when penalties outweigh task success.
+
+### Phase 3: Structural Plasticity Update
+
+The graph structure $A$ is updated using **reward-modulated Hebbian plasticity** (non-gradient operation):
+
+#### 3.1 Edge Weight Updates
+
+For each existing edge $A_{ji}$ (from node $j$ to node $i$):
+
+1. Compute **node correlation**:
+   $$s_{ji} = H_j^T H_i$$
+   (dot product of node activation vectors)
+
+2. Apply **Hebbian-reward update**:
+   $$\Delta A_{ji} = \eta_w \cdot R_k \cdot s_{ji}$$
+   $$A_{ji} \leftarrow \text{clip}(A_{ji} + \Delta A_{ji}, -w_{\max}, w_{\max})$$
+   
+   where $\eta_w = 0.01$ is the plasticity learning rate.
+
+3. **Prune weak edges**: If $|A_{ji}| < \tau_{\text{prune}}$ (e.g., 0.02), set $A_{ji} = 0$.
+
+#### 3.2 Edge Addition
+
+New edges are added based on **high cosine similarity** between node pairs:
+
+1. Compute normalized node states: $\hat{H}_i = \frac{H_i}{\|H_i\|_2}$
+2. Compute cosine similarity matrix: $\text{cos\_sim} = \hat{H} \hat{H}^T$
+3. For pairs $(i, j)$ with:
+   - No existing edge: $|A_{ij}| < 10^{-6}$
+   - High similarity: $\text{cos\_sim}_{ij} > \tau_{\text{add}}$ (e.g., 0.8)
+   - Under limit: fewer than `max_new_edges` added this step
+   
+   Add edge: $A_{ij} = 0.05 \cdot \text{cos\_sim}_{ij}$
+
+### Training Loop
+
+The complete training process combines gradient-based and plasticity-based updates:
+
+**For each batch:**
+
+```python
+# 1. Forward pass (reasoning)
+y_pred, info = model(x)
+
+# 2. Compute losses
+task_loss = MSE(y_pred, y_true)
+C_energy, C_inst = model.compute_structure_costs(...)
+total_loss = task_loss + λ₁·C_energy + λ₂·C_inst
+
+# 3. Gradient-based update (node parameters)
+loss.backward()
+optimizer.step()  # Updates: encoder, W_self, output_head
+
+# 4. Plasticity-based update (graph structure)
+with torch.no_grad():
+    R_k = model.compute_reward(task_loss, C_energy, C_inst)
+    model.update_structure(H_final, R_k)  # Updates: A (adjacency matrix)
+```
+
+**Key insight**: Node parameters (weights) learn via **gradients**, while graph structure (edges) learns via **reward-modulated plasticity**. This dual mechanism enables the model to self-organize its architecture based on task performance.
+
+### Why This Works
+
+1. **Stable Reasoning**: Damped message passing prevents divergence, allowing $T_r$ steps of iterative refinement.
+2. **Reward Signal**: $R_k$ provides a global signal that correlates with task success, guiding structural changes.
+3. **Hebbian Learning**: Edges strengthen when nodes co-activate ($s_{ji} > 0$) and task succeeds ($R_k > 0$), implementing Hebb's rule: "neurons that fire together, wire together."
+4. **Adaptive Structure**: Graph grows/shrinks based on correlation patterns, creating efficient connectivity for the task.
+
 ## Installation
 
 ```bash
