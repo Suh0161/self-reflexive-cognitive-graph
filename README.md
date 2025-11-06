@@ -123,13 +123,13 @@ For each existing edge $A_{ji}$ (from node $j$ to node $i$):
 New edges are added based on **high cosine similarity** between node pairs:
 
 1. Compute normalized node states: $\hat{H}_i = \frac{H_i}{\|H_i\|_2}$
-2. Compute cosine similarity matrix: $\text{cos\_sim} = \hat{H} \hat{H}^T$
+2. Compute cosine similarity matrix: $\text{sim} = \hat{H} \hat{H}^T$ (cosine similarity matrix)
 3. For pairs $(i, j)$ with:
    - No existing edge: $|A_{ij}| < 10^{-6}$
-   - High similarity: $\text{cos\_sim}_{ij} > \tau_{\text{add}}$ (e.g., 0.8)
+   - High similarity: $\text{sim}_{i,j} > \tau_{\text{add}}$ (e.g., 0.8)
    - Under limit: fewer than `max_new_edges` added this step
    
-   Add edge: $A_{ij} = 0.05 \cdot \text{cos\_sim}_{ij}$
+   Add edge: $A_{ij} = 0.05 \cdot \text{sim}_{i,j}$
 
 ### Training Loop
 
